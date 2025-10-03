@@ -1,0 +1,33 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "posnoise"
+version = "0.0.1"
+authors = [{name="Oren Halvani"}]
+description = "POSNoise: An Effective Countermeasure Against Topic Biases in Authorship Analysis"
+readme = "README.md"
+requires-python = ">=3.9"
+
+classifiers = [
+	"Development Status :: 4 - Beta",
+	"Intended Audience :: Developers",
+	"License :: OSI Approved :: MIT License",
+	"Operating System :: OS Independent", 
+	"Programming Language :: Python :: 3.9",
+	"Programming Language :: Python :: 3.10",
+	"Programming Language :: Python :: 3.11",
+	"Programming Language :: Python :: 3.12"
+]
+
+dependencies = [
+"numpy>=2.3.3",
+"spacy>=3.7.4"
+]
+
+keywords = ["topic-masking", "authorship-analysis", "authorship-verification", "authorship-attribution", "topic-debiasing"]
+
+[project.urls]
+"Homepage" = "https://github.com/Halvani/POSNoise"
+"Bug Tracker" = "https://github.com/Halvani/POSNoise/issues"
