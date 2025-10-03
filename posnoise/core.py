@@ -296,10 +296,3 @@ class POSNoise:
                 text = text[: token.idx] + replace_token + text[token.idx + len(token.text) :]
         return text
 
-
-
-posnoise = POSNoise(spacy_model_size=SpacyModelSize.Small, verbose=True)
-document = "The original dataset contains two partitions comprising sockpuppets and non-sockpuppets cases."
-posnoised_doc = posnoise.pos_noise(document)
-print(document)
-print(posnoised_doc)

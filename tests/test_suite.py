@@ -21,9 +21,9 @@ class TestPOSNoise(unittest.TestCase):
 
     def test_posnoise_masking_1_large_model(self):
         posnoise_instance = POSNoise(spacy_model_size=posnoise.SpacyModelSize.Large)
-        document = "Mathematics is the most beautiful and most powerful creation of the human spirit."
+        document = "I love python !"
         posnoised_doc = posnoise_instance.pos_noise(document) 
         
-        assert posnoised_doc == "# is the most @ and most @ # of the @ #."
+        assert posnoised_doc == "I Ø # !"
 
    
