@@ -24,22 +24,39 @@ The latter will pull and install the latest commit from this repository as well 
 
 ## Quickstart
 ```python
-import posnoise
 from posnoise import POSNoise
 
-posnoise_instance = POSNoise(spacy_model_size=posnoise.core.SpacyModelSize.Large)
+# By default POSNoise loads the "Large" spaCy model
+posnoise_instance = POSNoise()
+    
+# In case you want specify another model, just set it accordingly e.g. 
+# posnoise_instance = POSNoise(spacy_model_size=posnoise.core.SpacyModelSize.Medium)
 
-document = "I love python !"
+document = "Fitzgerald made her first tour of Australia in July 1954 for the Australian-based American promoter Lee Gordon."
 posnoised_doc = posnoise_instance.pos_noise(document)
 
 print(document)
+# Fitzgerald made her first tour of Australia in July 1954 for the Australian-based American promoter Lee Gordon.
+
 print(posnoised_doc)
- 
-# I love python !
-# I Ø # !
+# § made her first # of § in § µ for the §-Ø @ # § §.
 ```
 
-A detailed explanation of the **POS placeholders** (Ø, #, etc.) used in POSNoise can be found in Table 2 in the paper. Here, the arXiv version for open access: https://arxiv.org/abs/2005.06605
+All part-of-speech (POS) placeholders used in POSNoise to replace topic-related words or tokens are listed below:
+
+| **Category**   | Tag | Examples                                      |
+|----------------|-----|-----------------------------------------------|
+| **Noun**        | #   | { house, music, bird, tree, air, … }         |
+| **Proper noun** | §   | { David, Vivien, London, USA, COVID-19, … }  |
+| **Verb**        | Ø   | { eat, laugh, dance, travel, hiking, … }     |
+| **Adjective**   | @   | { red, shiny, fascinating, phenomenal, … }   |
+| **Adverb**      | ©   | { financially, foolishly, angrily, … }       |
+| **Numeral**     | μ   | { 0, 5, 2013, 3.14159, III, IV, MMXIV, … }   |
+| **Symbol**      | $   | { £, ©, §, %, #, … }                         |
+| **Other**       | ¥   | { xfgh, pdl, jklw, … }                       |
+
+
+_Source_: [POSNoise: An Effective Countermeasure Against Topic Biases in Authorship Analysis](https://arxiv.org/abs/2005.06605) ➜ Table 2. 
 
 ## Features
 - Effective way to mask topic-relatd content with **custom POS placeholders**

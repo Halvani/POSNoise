@@ -118,7 +118,7 @@ class POSNoise:
         self,
         nlp_model: Optional["spacy.language.Language"] = None,
         abbrev_pos_tags: Optional[dict] = None,
-        spacy_model_size: Union[SpacyModelSize, str] = SpacyModelSize.Small,
+        spacy_model_size: Union[SpacyModelSize, str] = SpacyModelSize.Large,
         disable: Iterable[str] = ("parser", "ner"),
         verbose: bool = False,
         log_fn: Optional[Callable[[str], None]] = None,
