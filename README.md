@@ -40,6 +40,7 @@ print(document)
 
 print(posnoised_doc)
 # § made her first # of § in § µ for the §-Ø @ # § §.
+
 ```
 
 All part-of-speech (POS) placeholders used in POSNoise to replace topic-related words or tokens are listed below:
