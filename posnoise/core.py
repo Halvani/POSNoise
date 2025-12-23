@@ -1,18 +1,15 @@
 """
 POSNoise: An Effective Countermeasure Against Topic Biases in Authorship Analysis.
 
-This module implements a topic masking approach (POSNoise) that masks
-thematic content by replacing topic-bearing tokens with POS-tag placeholders,
-while retaining punctuation, stylistic markers as well as syntactic structures.
-The goal is to attenuate topic signal and emphasize stylistic cues (e.g.,
-for Authorship Attribution and Authorship Verification). 
+This module implements a topic masking approach (POSNoise) that masks thematic content by replacing 
+topic-related tokens with POS-tag placeholders, while retaining stylistically relevant words, phrases and punctuation.
+The goal is to attenuate topic signal and emphasize stylistic cues (e.g., for Authorship Attribution and Authorship Verification). 
 
-The approach is described in:
+The approach is described in detail in the following paper:
 ----------------------------------------------
-Oren Halvani and Lukas Graner. 2021. POSNoise: An Effective Countermeasure Against 
-Topic Biases in Authorship Analysis. In Proceedings of the 16th International Conference 
-on Availability, Reliability and Security (ARES '21). Association for Computing Machinery, 
-New York, NY, USA, Article 47, 1–12. https://doi.org/10.1145/3465481.3470050
+Oren Halvani and Lukas Graner. 2021. POSNoise: An Effective Countermeasure Against Topic Biases in Authorship Analysis. 
+In Proceedings of the 16th International Conference on Availability, Reliability and Security (ARES '21). 
+Association for Computing Machinery, New York, NY, USA, Article 47, 1–12. https://doi.org/10.1145/3465481.3470050
 ----------------------------------------------
 
 Examples
@@ -23,7 +20,6 @@ Examples
 "The # # Ø µ # Ø # and #-# #."
 """
 
-
 from __future__ import annotations
 
 import re
@@ -33,6 +29,8 @@ from typing import Callable, Iterable, Optional, Union
 
 import numpy as np
 import spacy
+from spacy.language import Language
+from tqdm.auto import tqdm
 
 try:
     # Python 3.9+
@@ -77,7 +75,7 @@ class POSNoise:
         A pre-initialized spaCy pipeline. If omitted, one is loaded internally.
     abbrev_pos_tags : dict, optional
         Mapping from POS tags (e.g. "NOUN") to placeholder symbols.
-    spacy_model_size : SpacyModelSize or str, default=SpacyModelSize.Small
+    spacy_model_size : SpacyModelSize or str, default=SpacyModelSize.Large
         Identifier of spaCy model to load when `nlp_model` is not supplied.
     disable : Iterable[str], default=("parser", "ner")
         Components of the spaCy pipeline to disable for efficiency.
@@ -105,14 +103,13 @@ class POSNoise:
             Each pattern is tokenized and lowercased; tokens matching these
             patterns will *not* be masked by POSNoise.
         """
-        #patterns_filepath = Path(os.getcwd(), "pattern_list", "POSNoise_PatternList_Ver.2.1.txt")
+        
         patterns_filepath = Path(r"posnoise/pattern_list/POSNoise_PatternList_Ver.2.1.txt")
                                 
         return [
             [t.text.lower() for t in self.nlp_model(p)]
             for p in patterns_filepath.read_text(encoding="utf-8").splitlines()
-            if p.strip()
-        ]
+            if p.strip()]
 
     def __init__(
         self,
@@ -121,8 +118,7 @@ class POSNoise:
         spacy_model_size: Union[SpacyModelSize, str] = SpacyModelSize.Large,
         disable: Iterable[str] = ("parser", "ner"),
         verbose: bool = False,
-        log_fn: Optional[Callable[[str], None]] = None,
-    ):
+        log_fn: Optional[Callable[[str], None]] = None):
         """
         Initialize the POSNoise masker, setting up the NLP pipeline and placeholder map.
 
@@ -130,13 +126,12 @@ class POSNoise:
         by `spacy_model_size`. When `verbose=True` (or a `log_fn` is provided),
         the user is informed about download/installation steps.
         """
+        
         self.verbose = bool(verbose)
         self._log_fn = log_fn
         model_id = (
             spacy_model_size.value
-            if isinstance(spacy_model_size, SpacyModelSize)
-            else str(spacy_model_size)
-        )
+            if isinstance(spacy_model_size, SpacyModelSize) else str(spacy_model_size))
         self._disable = tuple(disable)
         self.nlp_model = nlp_model or self.get_spacy_nlp(model_id)
         self.abbrev_pos_tags = abbrev_pos_tags or {
@@ -147,11 +142,11 @@ class POSNoise:
             "ADV": "©",
             "NUM": "µ",
             "SYM": "$",
-            "X": "¥",
-        }
+            "X": "¥"}
 
     def _log(self, msg: str) -> None:
         """Log progress messages either via custom logger or stdout."""
+        
         if self._log_fn is not None:
             try:
                 self._log_fn(msg)
@@ -169,7 +164,7 @@ class POSNoise:
         Parameters
         ----------
         model_id : str
-            The model name (e.g. "en_core_web_md").
+            The model name (e.g. "en_core_web_lg").
 
         Returns
         -------
@@ -181,6 +176,7 @@ class POSNoise:
         RuntimeError
             If installation or loading fails.
         """
+        
         self._log(f"[POSNoise] Loading spaCy model '{model_id}' (disabled: {', '.join(self._disable) or 'none'})...")
         try:
             nlp = spacy.load(model_id, disable=list(self._disable))
@@ -193,19 +189,17 @@ class POSNoise:
             except Exception as import_err:
                 raise RuntimeError(
                     f"spaCy model '{model_id}' is not installed and the download utility "
-                    f"could not be imported. Original error: {import_err}"
-                )
+                    f"could not be imported. Original error: {import_err}")
 
             try:
                 self._log(f"[POSNoise] Downloading '{model_id}' — this may take a few minutes.")
-                spacy_download(model_id)  # May print its own progress; we also announce start/finish.
+                spacy_download(model_id)
                 self._log(f"[POSNoise] Download complete. Installing/validating '{model_id}'...")
             except SystemExit as e:
-                # spacy.cli.download may call sys.exit on failure
+                # Note, spacy.cli.download may call sys.exit on failure
                 self._log(f"[POSNoise] Download failed for '{model_id}'.")
                 raise RuntimeError(
-                    f"Failed to auto-install spaCy model '{model_id}'. Detail: {e}"
-                )
+                    f"Failed to auto-install spaCy model '{model_id}'. Detail: {e}")
             except Exception as e:
                 self._log(f"[POSNoise] Download failed for '{model_id}'.")
                 raise RuntimeError(f"Failed to auto-install spaCy model '{model_id}': {e}")
@@ -217,8 +211,7 @@ class POSNoise:
             except Exception as e:
                 self._log(f"[POSNoise] Installed '{model_id}', but loading failed.")
                 raise RuntimeError(
-                    f"Installed spaCy model '{model_id}', but failed to load it: {e}"
-                )
+                    f"Installed spaCy model '{model_id}', but failed to load it: {e}")
 
     def pos_noise_(self, text: str):
         """
@@ -239,6 +232,7 @@ class POSNoise:
             - bitmask: Boolean array (True = preserve, False = replace)
             - tokens: List of spaCy tokens
         """
+        
         tokens = list(self.nlp_model(text))
         bitmask = np.zeros(len(tokens), dtype=bool)
 
@@ -267,11 +261,8 @@ class POSNoise:
 
     def pos_noise(self, text: str) -> str:
         """
-        Apply topic masking to text by replacing tokens with POS placeholders.
-
-        For each token not marked for preservation, substitute the token text
-        with its POS placeholder. Preserved tokens (e.g. punctuation, safe
-        patterns, certain numerals, contractions) remain unchanged.
+        Apply topic masking to text by replacing topic-related tokens with POS placeholders. 
+        Stylistically relevant words and phrases contained in safe_patterns() remain unchanged.
 
         Parameters
         ----------
@@ -289,6 +280,7 @@ class POSNoise:
         >>> posnoise.pos_noise("The dataset contains sockpuppets.")
         "The # Ø #."
         """
+        
         bitmask, tokens = self.pos_noise_(text)
         for m, token in reversed(list(zip(bitmask, tokens))):
             if not m:
@@ -296,3 +288,82 @@ class POSNoise:
                 text = text[: token.idx] + replace_token + text[token.idx + len(token.text) :]
         return text
 
+    def pos_noise_corpus(
+        self,
+        corpus_path: Union[str, Path],
+        overwrite: bool = False,
+        destination_path: Optional[Union[str, Path]] = None,
+        files_to_exclude: Optional[Iterable[str]] = None,
+        file_extensions: Optional[Iterable[str]] = (".txt",),
+        encoding: str = "utf-8",
+        errors: str = "strict") -> None:
+        """
+        Apply POS-based masking to a text corpus on disk.
+
+        Recursively traverses `corpus_path` and applies `pos_noise()` to files matching the given file extensions.
+        By default, ground-truth metadata files {"contents.json", "truth.txt", "meta.csv"} commonly found in well-known 
+        PAN Authorship Verification corpora [1] are not masked and are either copied unchanged (when `overwrite=False`) 
+        or left untouched (when `overwrite=True`).
+        
+        [1] PAN Authorship Verification corpora --> https://pan.webis.de/data.html
+
+        Args:
+            corpus_path: Root directory of the source corpus.
+            overwrite: If True, overwrite files in place under `corpus_path`.
+                If False, mirror the directory structure into `destination_path`
+                and write masked files there.
+            destination_path: Output root directory, required when `overwrite` is False.
+            files_to_exclude: Filenames to exclude from masking (matched against `Path.name`).
+                Defaults to {"contents.json", "truth.txt"}.
+            file_extensions: File extensions to process (e.g. [".txt", ".md"]).
+                - Default: (".txt",)
+                - If None: process all files except excluded meta-files.
+            encoding: Text encoding used for reading and writing.
+            errors: Encoding error handling strategy ("strict", "replace", "ignore").
+
+        Raises:
+            ValueError: If `corpus_path` is not an existing directory.
+            ValueError: If `overwrite` is False and `destination_path` is not provided.
+        """
+    
+        src_root = Path(corpus_path)
+        if not src_root.exists() or not src_root.is_dir():
+            raise ValueError(f"Corpus path must be an existing directory, got: {src_root}")
+
+        excluded_names = set(files_to_exclude) if files_to_exclude is not None else {
+            "contents.json", "truth.txt", "meta.csv"}
+
+        normalized_exts = None
+        if file_extensions is not None:
+            normalized_exts = {ext.lower() for ext in file_extensions}
+
+        if overwrite:
+            dst_root = None
+        else:
+            if destination_path is None:
+                raise ValueError("Destination path must be provided when overwrite=False")
+            dst_root = Path(destination_path)
+            dst_root.mkdir(parents=True, exist_ok=True)
+
+        all_files = [p for p in src_root.rglob("*") if p.is_file()]
+
+        for src_path in tqdm(all_files, desc="POSNoise corpus", unit="file"):
+            rel_path = src_path.relative_to(src_root)
+            dst_path = src_path if overwrite else dst_root / rel_path  # type: ignore[operator]
+            dst_path.parent.mkdir(parents=True, exist_ok=True)
+
+            # Always skip excluded meta-files
+            if src_path.name in excluded_names:
+                if not overwrite:
+                    dst_path.write_bytes(src_path.read_bytes())
+                continue
+
+            # Extension-based filtering
+            if normalized_exts is not None and src_path.suffix.lower() not in normalized_exts:
+                if not overwrite:
+                    dst_path.write_bytes(src_path.read_bytes())
+                continue
+
+            text = src_path.read_text(encoding=encoding, errors=errors)
+            masked = self.pos_noise(text)
+            dst_path.write_text(masked, encoding=encoding, errors=errors)
