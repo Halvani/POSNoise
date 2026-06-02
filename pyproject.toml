@@ -4,33 +4,51 @@ build-backend = "hatchling.build"
 
 [project]
 name = "posnoise"
-version = "0.0.2"
-authors = [{name="Oren Halvani"}]
+version = "0.0.3"
+authors = [{ name = "Oren Halvani" }]
 description = "POSNoise: An Effective Countermeasure Against Topic Biases in Authorship Analysis"
 readme = "README.md"
 requires-python = ">=3.9"
+license = "Apache-2.0"
 
 classifiers = [
-	"Development Status :: 4 - Beta",
-	"Intended Audience :: Developers",
-	"License :: OSI Approved :: MIT License",
-	"Operating System :: OS Independent", 
-	"Programming Language :: Python :: 3.9",
-	"Programming Language :: Python :: 3.10",
-	"Programming Language :: Python :: 3.11",
-	"Programming Language :: Python :: 3.12",
-	"Programming Language :: Python :: 3.13",
-	"Programming Language :: Python :: 3.14"
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13"
 ]
 
 dependencies = [
-"numpy>=1.20",
-"spacy>=3.7.4",
-"tqdm>=4.64"
+    "numpy>=1.20",
+    "spacy>=3.7.4",
+    "tqdm>=4.64",
+    "click>=8.0"
 ]
 
-keywords = ["topic-masking", "topic-debiasing", "authorship-analysis", "authorship-verification", "authorship-attribution", "authorship-clustering", "generated-text", "generated-text-detection", "ai-generated-text", "ai-generated-text-detection"]
+[project.optional-dependencies]
+test = [
+    "pytest>=7.0",
+    "click>=8.0"
+]
+
+keywords = [
+    "topic-masking",
+    "topic-debiasing",
+    "authorship-analysis",
+    "authorship-verification",
+    "authorship-attribution",
+    "authorship-clustering",
+    "generated-text",
+    "generated-text-detection",
+    "ai-generated-text",
+    "ai-generated-text-detection"
+]
 
 [project.urls]
-"Homepage" = "https://github.com/Halvani/POSNoise"
+Homepage = "https://github.com/Halvani/POSNoise"
 "Bug Tracker" = "https://github.com/Halvani/POSNoise/issues"
