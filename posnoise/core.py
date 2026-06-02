@@ -1,9 +1,10 @@
 """
 POSNoise: An Effective Countermeasure Against Topic Biases in Authorship Analysis.
 
-This module implements a topic masking approach (POSNoise) that masks thematic content by replacing 
-topic-related tokens with POS-tag placeholders, while retaining stylistically relevant words, phrases and punctuation.
-The goal is to attenuate topic signal and emphasize stylistic cues (e.g., for Authorship Attribution and Authorship Verification). 
+This module implements a topic masking approach (POSNoise) that masks thematic content by replacing
+topic-related tokens with POS-tag placeholders, while retaining stylistically relevant words, phrases,
+and punctuation. The goal is to attenuate topic signal and emphasize stylistic cues (e.g., for
+Authorship Attribution and Authorship Verification).
 
 The approach is described in detail in the following paper:
 ----------------------------------------------
@@ -14,10 +15,23 @@ Association for Computing Machinery, New York, NY, USA, Article 47, 1–12. http
 
 Examples
 --------
+English
+~~~~~~~
+
+>>> from posnoise import POSNoise, SpacyModelSize
 >>> posnoise = POSNoise(spacy_model_size=SpacyModelSize.Medium)
 >>> doc = "The original dataset contains two partitions comprising sockpuppets and non-sockpuppets cases."
 >>> posnoise.pos_noise(doc)
-"The # # Ø µ # Ø # and #-# #."
+"The @ # Ø two # Ø # and @@@ #."
+
+German
+~~~~~~
+
+>>> from posnoise import POSNoise, SpacyLanguage, SpacyModelSize
+>>> posnoise = POSNoise(language=SpacyLanguage.German, spacy_model_size=SpacyModelSize.Medium)
+>>> doc = "Schöneberg ist ein Ortsteil im Berliner Bezirk Tempelhof-Schöneberg."
+>>> posnoise.pos_noise(doc)
+"§ ist ein # im @ # §."
 """
 
 from __future__ import annotations
@@ -39,105 +53,154 @@ except ImportError:  # pragma: no cover
     from functools import lru_cache as cache  # type: ignore
 
 
+class SpacyLanguage(Enum):
+    English = "en"
+    German = "de"
+
+
 class SpacyModelSize(Enum):
     """
     spaCy English model presets used for tokenization and POS tagging.
-
-    Small
-        "en_core_web_sm" (lightweight, fast, no vectors).
-    Medium
-        "en_core_web_md" (word vectors).
-    Large
-        "en_core_web_lg" (larger vectors, enhanced coverage).
-    Neural
-        "en_core_web_trf" (transformer-based pipeline).
+    
+    Small (lightweight, fast, no vectors)
+    Medium (word vectors)
+    Large (larger vectors, enhanced coverage)
+    Neural (transformer-based pipeline)
     """
+    Small = "sm"
+    Medium = "md"
+    Large = "lg"
+    Neural = "trf"
 
-    Small = "en_core_web_sm"
-    Medium = "en_core_web_md"
-    Large = "en_core_web_lg"
-    Neural = "en_core_web_trf"
+
+SPACY_MODEL_IDS = {
+    SpacyLanguage.English: {
+        SpacyModelSize.Small: "en_core_web_sm",
+        SpacyModelSize.Medium: "en_core_web_md",
+        SpacyModelSize.Large: "en_core_web_lg",
+        SpacyModelSize.Neural: "en_core_web_trf",
+    },
+    SpacyLanguage.German: {
+        SpacyModelSize.Small: "de_core_news_sm",
+        SpacyModelSize.Medium: "de_core_news_md",
+        SpacyModelSize.Large: "de_core_news_lg",
+        SpacyModelSize.Neural: "de_dep_news_trf",
+    },
+}
 
 
-class POSNoise:
+class POSNoise:    
     """
     Topic masking through POS-tag substitution.
 
     This class implements the POSNoise method (Halvani et al. 2021) to mask
     thematic content in documents by replacing content words with symbolic
-    POS placeholders (e.g., NOUN → "#", VERB → "Ø"), while retaining punctuation marks 
-    as well as words and phrases that are stylisticaly relevant. The result is
-    a “skeleton” of the text emphasizing style rather than topic.
+    POS placeholders (e.g., NOUN → "#", VERB → "Ø"), while retaining
+    punctuation marks as well as words and phrases that are stylistically
+    relevant. The result is a "skeleton" of the text emphasizing style
+    rather than topic.
+
+    POSNoise supports multiple languages through language-specific spaCy
+    models and safe-pattern lists. Currently, English and German are supported.
 
     Parameters
     ----------
     nlp_model : spacy.language.Language, optional
         A pre-initialized spaCy pipeline. If omitted, one is loaded internally.
+
     abbrev_pos_tags : dict, optional
         Mapping from POS tags (e.g. "NOUN") to placeholder symbols.
+
+    language : SpacyLanguage or str, default=SpacyLanguage.English
+        Language of the input documents. Determines which spaCy model family
+        and safe-pattern list are used. Supported values are
+        ``SpacyLanguage.English`` and ``SpacyLanguage.German``.
+
     spacy_model_size : SpacyModelSize or str, default=SpacyModelSize.Large
-        Identifier of spaCy model to load when `nlp_model` is not supplied.
+        Size of the spaCy model to load when ``nlp_model`` is not supplied.
+        Depending on the selected language, one of the corresponding spaCy
+        model variants (Small, Medium, Large, or Neural) is loaded.
+
     disable : Iterable[str], default=("parser", "ner")
         Components of the spaCy pipeline to disable for efficiency.
+
     verbose : bool, default=False
-        If True, prints progress messages during model load/download.
+        If True, prints progress messages during model loading and downloading.
+
     log_fn : Callable[[str], None], optional
         Custom logger callback for progress messages. If provided, overrides
         printing. Useful for GUIs or notebooks that capture output.
 
     Examples
     --------
-    >>> posnoise = POSNoise(spacy_model_size=SpacyModelSize.Medium, verbose=True)
+    English
+    ~~~~~~~~
+    >>> posnoise = POSNoise(language=SpacyLanguage.English, spacy_model_size=SpacyModelSize.Medium)
     >>> posnoise.pos_noise("The dataset contains sockpuppets.")
-    "The # Ø #."
+    'The # Ø #.'
+
+    German
+    ~~~~~~
+    >>> posnoise = POSNoise(language=SpacyLanguage.German, spacy_model_size=SpacyModelSize.Medium)
+    >>> posnoise.pos_noise("Ich liebe Python!")
+    'Ich Ø §!'
+
+    Notes
+    -----
+    The exact masking output may vary slightly across spaCy model versions,
+    as tokenization and POS tagging are determined by the underlying spaCy
+    pipeline.
     """
 
     @cache
     def safe_patterns(self):
         """
-        Load a list of token/phrase-level safe patterns that should remain unchanged.
-
-        Returns
-        -------
-        list[list[str]]
-            Each pattern is tokenized and lowercased; tokens matching these
-            patterns will *not* be masked by POSNoise.
+        Load language-specific token/phrase-level safe patterns.
         """
-        
-        patterns_filepath = Path(r"posnoise/pattern_list/POSNoise_PatternList_Ver.2.1.txt")
-                                
+        pattern_files = {
+            SpacyLanguage.English: "posnoise/pattern_list/POSNoise_PatternList_En_v2.1.txt",
+            SpacyLanguage.German: "posnoise/pattern_list/POSNoise_PatternList_De_v3.0.txt"}
+
+        patterns_filepath = Path(pattern_files[self.language])
+
         return [
             [t.text.lower() for t in self.nlp_model(p)]
             for p in patterns_filepath.read_text(encoding="utf-8").splitlines()
-            if p.strip()]
+            if p.strip()
+        ]
 
     def __init__(
         self,
         nlp_model: Optional["spacy.language.Language"] = None,
         abbrev_pos_tags: Optional[dict] = None,
+        language: Union[SpacyLanguage, str] = SpacyLanguage.English,
         spacy_model_size: Union[SpacyModelSize, str] = SpacyModelSize.Large,
+        safe_patterns_path: Optional[Union[str, Path]] = None,
         disable: Iterable[str] = ("parser", "ner"),
         verbose: bool = False,
         log_fn: Optional[Callable[[str], None]] = None):
-        """
-        Initialize the POSNoise masker, setting up the NLP pipeline and placeholder map.
 
-        If `nlp_model` is absent, loads or auto-installs the spaCy model given
-        by `spacy_model_size`. When `verbose=True` (or a `log_fn` is provided),
-        the user is informed about download/installation steps.
-        """
-        
         self.verbose = bool(verbose)
         self._log_fn = log_fn
-        model_id = (
-            spacy_model_size.value
-            if isinstance(spacy_model_size, SpacyModelSize) else str(spacy_model_size))
+        self.language = (language if isinstance(language, SpacyLanguage) else SpacyLanguage(str(language)))
+        self.spacy_model_size = (spacy_model_size if isinstance(spacy_model_size, SpacyModelSize) else SpacyModelSize(str(spacy_model_size)))
+
         self._disable = tuple(disable)
+        model_id = SPACY_MODEL_IDS[self.language][self.spacy_model_size]
         self.nlp_model = nlp_model or self.get_spacy_nlp(model_id)
+
+        if safe_patterns_path is None:
+            if self.language == SpacyLanguage.English:
+                safe_patterns_path = "posnoise/pattern_list/POSNoise_PatternList_Ver.2.1.txt"
+            elif self.language == SpacyLanguage.German:
+                safe_patterns_path = "posnoise/pattern_list/POSNoise_PatternList_DE.txt"
+
+        self.safe_patterns_path = Path(safe_patterns_path)
         self.abbrev_pos_tags = abbrev_pos_tags or {
             "NOUN": "#",
             "PROPN": "§",
             "VERB": "Ø",
+            "AUX": "Ø",
             "ADJ": "@",
             "ADV": "©",
             "NUM": "µ",
@@ -235,6 +298,9 @@ class POSNoise:
         
         tokens = list(self.nlp_model(text))
         bitmask = np.zeros(len(tokens), dtype=bool)
+        
+        ENGLISH_CONTRACTIONS = {"'m", "'d", "'s", "'t", "'ve", "'ll", "'re", "'ts", "'em", "'Tis"}
+        GERMAN_STYLE_TOKENS = {"'s", "’s"}
 
         for safe_pattern in self.safe_patterns():
             i = 0
@@ -251,9 +317,13 @@ class POSNoise:
                     pattern_index = 0
                 i += 1
 
-        for i, token in enumerate(tokens):
-            if token.text in {"'m", "'d", "'s", "'t", "'ve", "'ll", "'re", "'ts", "'em", "'Tis"}:
+        for i, token in enumerate(tokens):            
+            if self.language == SpacyLanguage.English and token.text in ENGLISH_CONTRACTIONS:
                 bitmask[i] = True
+                
+            if self.language == SpacyLanguage.German and token.text in GERMAN_STYLE_TOKENS:
+                bitmask[i] = True
+                
             if token.pos_ == "NUM" and not re.fullmatch(r"\d+", token.text):
                 bitmask[i] = True
 
