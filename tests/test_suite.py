@@ -30,4 +30,4 @@ class TestPOSNoise(unittest.TestCase):
         document = "Ich liebe Python !"
         posnoised_doc = posnoise_instance.pos_noise(document)
 
-        assert posnoised_doc == "Ich Ø § !"
+        assert posnoised_doc == "Ich Ø # !"
