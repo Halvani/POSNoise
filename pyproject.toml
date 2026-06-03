@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "posnoise"
-version = "0.0.5"
+version = "0.0.4"
 authors = [{ name = "Oren Halvani" }]
 description = "POSNoise: An Effective Countermeasure Against Topic Biases in Authorship Analysis"
 readme = "README.md"
