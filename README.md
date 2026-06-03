@@ -60,7 +60,7 @@ All part-of-speech (POS) placeholders used in POSNoise to replace topic-related 
 _Source_: [POSNoise: An Effective Countermeasure Against Topic Biases in Authorship Analysis](https://arxiv.org/abs/2005.06605) ➜ Table 2. 
 
 ## Features
-- Effective way to mask topic-relatd content with **custom POS placeholders**
+- Effective way to mask topic-related content with **custom POS placeholders**
 - **Automatic NLP pipeline creation** (loads and installs the spaCy models on demand, while providing feedback)
 - **No API dependency** (after downloading the spaCy models, POSNoise can be used completely **offline**)
 - **Documented** source code
