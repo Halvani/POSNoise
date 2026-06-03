@@ -52,6 +52,7 @@ try:
 except ImportError:  # pragma: no cover
     from functools import lru_cache as cache  # type: ignore
 
+PACKAGE_ROOT = Path(__file__).resolve().parent
 
 class SpacyLanguage(Enum):
     English = "en"
@@ -158,8 +159,11 @@ class POSNoise:
         Load language-specific token/phrase-level safe patterns.
         """
         pattern_files = {
-            SpacyLanguage.English: "posnoise/pattern_list/POSNoise_PatternList_En_v2.1.txt",
-            SpacyLanguage.German: "posnoise/pattern_list/POSNoise_PatternList_De_v3.0.txt"}
+            SpacyLanguage.English: PACKAGE_ROOT
+            / "pattern_list/POSNoise_PatternList_En_v2.1.txt",
+            SpacyLanguage.German: PACKAGE_ROOT
+            / "pattern_list/POSNoise_PatternList_De_v3.0.txt",
+        }
 
         patterns_filepath = Path(pattern_files[self.language])
 
@@ -191,9 +195,13 @@ class POSNoise:
 
         if safe_patterns_path is None:
             if self.language == SpacyLanguage.English:
-                safe_patterns_path = "posnoise/pattern_list/POSNoise_PatternList_Ver.2.1.txt"
+                safe_patterns_path = (
+                    PACKAGE_ROOT / "pattern_list/POSNoise_PatternList_Ver.2.1.txt"
+                )
             elif self.language == SpacyLanguage.German:
-                safe_patterns_path = "posnoise/pattern_list/POSNoise_PatternList_DE.txt"
+                safe_patterns_path = (
+                    PACKAGE_ROOT / "pattern_list/POSNoise_PatternList_DE.txt"
+                )
 
         self.safe_patterns_path = Path(safe_patterns_path)
         self.abbrev_pos_tags = abbrev_pos_tags or {
