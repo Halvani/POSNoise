@@ -16,7 +16,7 @@ To prevent AA and AV methods from focusing on the topic and instead force them t
   <img
     src="https://github.com/user-attachments/assets/bc1e66e8-96ab-4e06-bf5c-76fd6486e864"
     alt="POSNoise in a nutshell..."
-    style="width: 80%; height: auto;"
+    style="width: 99%; height: auto;"
   />
 </div>
 <br><br>
@@ -24,7 +24,7 @@ To prevent AA and AV methods from focusing on the topic and instead force them t
   <img
     src="https://github.com/user-attachments/assets/4486b8c8-cecc-4dec-ab22-52d4200aafb9"
     alt="The L_TA pattern list..."
-    style="width: 75%; height: auto;"
+    style="width: 90%; height: auto;"
   />
 </div>
 <br><br>
@@ -32,7 +32,7 @@ To prevent AA and AV methods from focusing on the topic and instead force them t
   <img
     src="https://github.com/user-attachments/assets/936d7dcf-85c6-40e0-a307-a2515c496ea5"
     alt="The placeholder POStag list..."
-    style="width: 50%; height: auto;"
+    style="width: 65%; height: auto;"
   />
 </div>
 
