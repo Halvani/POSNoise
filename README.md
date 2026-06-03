@@ -11,6 +11,31 @@ Consider for example the following scenario: *D1* and *D2* represent two documen
 
 To prevent AA and AV methods from focusing on the topic and instead force them to concentrate on linguistic patterns such as function words or punctuation marks (which are closely related to writing style), topic masking approaches can be used, where POSNoise is one such approach... 
 
+##  POSNoise in a Nutshell
+<div style="text-align: center;">
+  <img
+    src="https://github.com/user-attachments/assets/bc1e66e8-96ab-4e06-bf5c-76fd6486e864"
+    alt="POSNoise in a nutshell..."
+    style="width: 80%; height: auto;"
+  />
+</div>
+<br><br>
+<div style="text-align: center;">
+  <img
+    src="https://github.com/user-attachments/assets/4486b8c8-cecc-4dec-ab22-52d4200aafb9"
+    alt="The L_TA pattern list..."
+    style="width: 75%; height: auto;"
+  />
+</div>
+<br><br>
+<div style="text-align: center;">
+  <img
+    src="https://github.com/user-attachments/assets/936d7dcf-85c6-40e0-a307-a2515c496ea5"
+    alt="The placeholder POStag list..."
+    style="width: 50%; height: auto;"
+  />
+</div>
+
 
 ## Installation
 The easiest way to install POSNoise is to use pip, where you can choose between (1) the PyPI repository and (2) this repository. 
@@ -24,23 +49,27 @@ The latter will pull and install the latest commit from this repository as well 
 
 ## Quickstart
 ```python
+import posnoise
 from posnoise import POSNoise
+from posnoise.core import SpacyLanguage, SpacyModelSize
 
-# By default POSNoise loads the "Large" spaCy model
-posnoise_instance = POSNoise()
-    
-# In case you want specify another model, just set it accordingly e.g. 
-# posnoise_instance = POSNoise(spacy_model_size=posnoise.core.SpacyModelSize.Medium)
+# English
+posnoise_en = POSNoise()  # Note, by default POSNoise loads the "Large" spaCy model
 
-document = "Fitzgerald made her first tour of Australia in July 1954 for the Australian-based American promoter Lee Gordon."
-posnoised_doc = posnoise_instance.pos_noise(document)
+# In case you want specify another model size, just set it accordingly e.g. 
+# posnoise_en = POSNoise(spacy_model_size=posnoise.core.SpacyModelSize.Medium)
 
-print(document)
-# Fitzgerald made her first tour of Australia in July 1954 for the Australian-based American promoter Lee Gordon.
+# German
+posnoise_de = POSNoise(language=SpacyLanguage.German)
 
-print(posnoised_doc)
-# § made her first # of § in § µ for the §-Ø @ # § §.
+text_en = "The original dataset contains two partitions comprising sockpuppets and non-sockpuppets cases."
+text_de = "Schöneberg ist ein Ortsteil im Berliner Bezirk Tempelhof-Schöneberg."
 
+print(posnoise_en.pos_noise(text_en))
+# The @ # Ø two # Ø # and @@@ #.
+
+print(posnoise_de.pos_noise(text_de))
+# § ist ein # im @ # §.
 ```
 
 All part-of-speech (POS) placeholders used in POSNoise to replace topic-related words or tokens are listed below:
@@ -61,7 +90,8 @@ _Source_: [POSNoise: An Effective Countermeasure Against Topic Biases in Authors
 
 ## Features
 - Effective way to mask topic-relatd content with **custom POS placeholders**
-- **Automatic NLP pipeline creation** (loads and installs the spaCy models on demand, while providing feedback)
+- **Multilingual support** (currently available in English and German)
+- **Automatic NLP pipeline creation** (loads and installs the spaCy models on demand, while providing installation feedback)
 - **No API dependency** (after downloading the spaCy models, POSNoise can be used completely **offline**)
 - **Documented** source code
 
