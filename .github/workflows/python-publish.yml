@@ -26,6 +26,29 @@ jobs:
         with:
           python-version: "3.x"
 
+      - name: Verify tag matches package version
+        # Prevent the recurring "file already exists" PyPI failure caused by a
+        # release tag pointing at a commit whose pyproject.toml version has not
+        # been bumped yet. Fails fast with a clear message instead of building a
+        # duplicate of an already-published version.
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+          # Strip an optional leading "v"/"v." prefix (e.g. "v.0.0.4" -> "0.0.4")
+          tag_version="${RELEASE_TAG#v}"
+          tag_version="${tag_version#.}"
+          # Read the version declared in pyproject.toml (PEP 621 [project] table)
+          py_version=$(python -c 'import re,sys; print(re.search(r"^version\s*=\s*\"([^\"]+)\"", open("pyproject.toml").read(), re.M).group(1))')
+          echo "Release tag:  ${RELEASE_TAG} (normalized: ${tag_version})"
+          echo "pyproject.toml version: ${py_version}"
+          if [ "${tag_version}" != "${py_version}" ]; then
+            echo "::error::Version mismatch — release tag '${RELEASE_TAG}' (normalized '${tag_version}') does not match version '${py_version}' in pyproject.toml."
+            echo "::error::Bump version in pyproject.toml BEFORE cutting the release tag, or move the tag to the commit where the bump was made."
+            exit 1
+          fi
+          echo "Tag and package version are aligned (${tag_version})."
+
       - name: Build release distributions
         run: |
           # NOTE: put your own distribution build steps here.
